@@ -1,0 +1,114 @@
+<?php
+
+	/**
+	 * Esta clase gestiona los usuarios
+	 */
+	
+	class Usuario {
+		
+		private $nombre;
+		private $password;
+		
+		function __construct() {
+			include 'config.php';
+			
+			$this->nombre 	= $usuario['user'];
+			$this->password	= $usuario['password'];
+			
+		}
+		
+		/**
+		 * Loguea al usario en el sistema
+		 * 
+		 * Crea la cookie necesaria para mantener logueado al usuario almacenando en ella su nombre de usuario y tipo de usuario.
+		 * 
+		 * @param string $usuario nombre de usuario para comprobar
+		 * @param string $password Cuerpo de la sección
+		 * @return boolean Devuelve FALSE si el usuario y la contraseña no coinciden
+		 * 
+		 */
+		 
+		public function login($nombre, $password)
+		{
+			/* añadir clase decorador para validar datos */
+			$nombre 	= htmlspecialchars($nombre);
+			$password 	= sha1(htmlspecialchars($password));
+			
+			if (($this->nombre == $nombre)&&($this->password == $password)){ 
+				$_SESSION["nombre"]		= $this->nombre;
+				$_SESSION["time_stamp"]	= time();
+				$_SESSION["php_id"]		= session_id();
+				header("Location:../");
+			}else { 
+			   header("Location:./error");
+			} 
+		}
+		
+		
+		
+		/**
+		 * Desconecta al usario que en ese momento esté conectado
+		 * 
+		 * @return boolean Devuelve TRUE si se consigue desconectar
+		 * 
+		 */
+		 
+		public function logout()
+		{
+			header("Location:./");
+			session_destroy();
+		}
+		
+		/**
+		 * Nos informa si el usuario está logueado
+		 * 
+		 * Comprueba que no lleva logueado más de x tiempo y que el SID es el que corresponde. En caso contrario, te expulsa.
+		 * 
+		 * @return boolean TRUE si hay un usuario logueado
+		 * 
+		 */
+		 
+		public function isLogged()
+		{
+			if (isset($_SESSION['php_id'])) {
+				if (((time() - $_SESSION['time_stamp'] ) < 100000000) && ($_SESSION['php_id'] = session_id()))
+				{
+					return(TRUE);
+				} else {
+					return(FALSE);
+				}
+			} else {
+				return(FALSE);
+			}
+		}
+		
+		/**
+		 * Genera el formulario para entrar en el sistema
+		 * 
+		 * Usa el sistema de plantillas para genera un formulario.
+		 * 
+		 * @param boolean $error FALSE por defecto, no obligatorio, define si se ha producido un error en el login
+		 * @return void
+		 * 
+		 */
+		 
+		public function formulario($error = false)
+		{
+			include 'config.php'; 
+			$plantilla = new Plantilla('login');
+			
+			if ($error) {$error_mensaje = "Compruebe el usuario y/o la contraseña. Alguno no es correcto.";} else {$error_mensaje = "";}
+			
+			$contenido  = array(
+			'base' => $config['base'],
+			'error' => $error_mensaje,
+			'titulo' => 'Acceso - '.$config['titulo'],
+			 );
+			
+			$plantilla->asigna_variables($contenido);
+				
+			echo $plantilla->muestra();
+		}
+		
+	}
+	
